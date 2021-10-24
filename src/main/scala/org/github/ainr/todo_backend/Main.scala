@@ -4,7 +4,7 @@ import cats.effect.{Async, Blocker, ContextShift, ExitCode, IO, IOApp, Resource}
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import org.github.ainr.todo_backend.config.AppConfig
-import org.github.ainr.todo_backend.http.HandlerImpl
+import org.github.ainr.todo_backend.http.interpreter.HandlerImpl
 import org.github.ainr.todo_backend.infrastructure.logging.LazyLogging
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.Logger.instance
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.{Logger, LoggerWithMetrics}
@@ -13,7 +13,8 @@ import org.github.ainr.todo_backend.repositories.fetch.TodoFetch
 import org.github.ainr.todo_backend.repositories.{TodoRepo, TodoRepoDoobieImpl}
 import org.github.ainr.todo_backend.services.healthcheck.{HealthCheckService, HealthCheckServiceImpl}
 import org.github.ainr.todo_backend.services.todo.{TodoService, TodoServiceImpl}
-import org.github.ainr.todo_backend.services.version.{VersionService, VersionServiceImpl}
+import org.github.ainr.todo_backend.services.version.VersionService
+import org.github.ainr.todo_backend.services.version.interpreter.VersionServiceImpl
 import org.http4s.implicits.http4sKleisliResponseSyntaxOptionT
 import org.http4s.metrics.MetricsOps
 import org.http4s.metrics.prometheus.{Prometheus, PrometheusExportService}

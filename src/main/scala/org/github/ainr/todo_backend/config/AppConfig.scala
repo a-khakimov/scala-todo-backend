@@ -1,7 +1,7 @@
 package org.github.ainr.todo_backend.config
 
 import cats.effect.Sync
-import cats.syntax.all._
+import cats.syntax.all.*
 import pureconfig.error.ConfigReaderException
 import pureconfig.generic.semiauto.deriveConvert
 import pureconfig.{ConfigConvert, ConfigSource}
@@ -15,7 +15,10 @@ object AppConfig {
 
   implicit private val convert: ConfigConvert[Config] = deriveConvert
 
-  def load[F[_]: Sync]: F[Config] = {
+  def load[
+    F[_]
+    : Sync
+  ]: F[Config] = {
     Sync[F]
       .delay {
         ConfigSource

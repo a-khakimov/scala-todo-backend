@@ -21,6 +21,4 @@ package object http {
       .compile
       .drain
   }
-
-
 }

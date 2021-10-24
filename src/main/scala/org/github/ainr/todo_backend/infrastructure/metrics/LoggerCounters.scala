@@ -14,14 +14,17 @@ final case class LoggerCounters[F[_]](
 
 object LoggerCounters {
 
-  def apply[F[_]: Applicative](registry: CollectorRegistry): LoggerCounters[F] = {
-    LoggerCounters(
+  def apply[
+    F[_]
+    : Applicative
+  ](
+    registry: CollectorRegistry
+  ): LoggerCounters[F] = LoggerCounters(
       errorCounter.register(registry).pure[F],
       warnCounter.register(registry).pure[F],
       infoCounter.register(registry).pure[F],
       debugCounter.register(registry).pure[F],
     )
-  }
 
   private lazy val errorCounter: Counter.Builder =
     Counter

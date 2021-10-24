@@ -12,12 +12,16 @@ import scala.concurrent.ExecutionContext
 
 package object db {
 
-  def transactor[F[_]: Async: ContextShift](
+  def transactor[
+    F[_]
+    : Async
+    : ContextShift
+  ](
     config: DatabaseConfig.Config
   )(
     ec: ExecutionContext,
     blocker: Blocker
-  ): Resource[F, HikariTransactor[F]] = {
+  ): Resource[F, HikariTransactor[F]] =
     HikariTransactor.newHikariTransactor[F](
       config.driver,
       config.url,
@@ -26,13 +30,16 @@ package object db {
       ec,
       blocker
     )
-  }
 
-  def migrate[F[_]: Applicative](config: DatabaseConfig.Config): F[MigrateResult] = {
+  def migrate[
+    F[_]
+    : Applicative
+  ](
+    config: DatabaseConfig.Config
+  ): F[MigrateResult] =
     Flyway
       .configure()
       .dataSource(config.url, config.user, config.password)
       .load()
       .migrate().pure[F]
-  }
 }
