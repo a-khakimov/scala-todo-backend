@@ -8,11 +8,13 @@ import org.github.ainr.todo_backend.http.interpreter.HandlerImpl
 import org.github.ainr.todo_backend.infrastructure.logging.LazyLogging
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.Logger.instance
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.{Logger, LoggerWithMetrics}
-import org.github.ainr.todo_backend.infrastructure.metrics.LoggerCounters
-import org.github.ainr.todo_backend.repositories.fetch.TodoFetch
-import org.github.ainr.todo_backend.repositories.{TodoRepo, TodoRepoDoobieImpl}
-import org.github.ainr.todo_backend.services.healthcheck.{HealthCheckService, HealthCheckServiceImpl}
-import org.github.ainr.todo_backend.services.todo.{TodoService, TodoServiceImpl}
+import org.github.ainr.todo_backend.infrastructure.metrics.LogsCounter
+import org.github.ainr.todo_backend.repositories.TodoRepo
+import org.github.ainr.todo_backend.repositories.interpreter.TodoRepoDoobieImpl
+import org.github.ainr.todo_backend.services.healthcheck.HealthCheckService
+import org.github.ainr.todo_backend.services.healthcheck.interpreter.HealthCheckServiceImpl
+import org.github.ainr.todo_backend.services.todo.TodoService
+import org.github.ainr.todo_backend.services.todo.interpreter.TodoServiceImpl
 import org.github.ainr.todo_backend.services.version.VersionService
 import org.github.ainr.todo_backend.services.version.interpreter.VersionServiceImpl
 import org.http4s.implicits.http4sKleisliResponseSyntaxOptionT
@@ -25,7 +27,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.ExecutionContext
 
 
-object Main extends IOApp with LazyLogging {
+object TodoAppLauncher extends IOApp with LazyLogging {
 
   override def run(args: List[String]): IO[ExitCode] = {
     for {
@@ -35,21 +37,19 @@ object Main extends IOApp with LazyLogging {
       _ <- Logger[IO].info(s"${config.database}")
       _ <- db.migrate[IO](config.database)
       _ <- resources[IO](config).use {
-        case (ec, transactor, metricsService, metrics) => {
+        case (ec, transactor, metricsService, metrics) =>
 
-          val loggerCounters = LoggerCounters[IO](metricsService.collectorRegistry)
+          val logsCounter: LogsCounter[IO] = LogsCounter[IO](metricsService.collectorRegistry)
 
-          val healthCheckServiceLogger = new LoggerWithMetrics[IO](LoggerFactory.getLogger(HealthCheckService.getClass))(loggerCounters)
-          val messagesServiceLogger = new LoggerWithMetrics[IO](LoggerFactory.getLogger(TodoService.getClass))(loggerCounters)
-          val versionServiceLogger = new LoggerWithMetrics[IO](LoggerFactory.getLogger(VersionService.getClass))(loggerCounters)
-          val messagesRepoLogger = new LoggerWithMetrics[IO](LoggerFactory.getLogger(TodoRepo.getClass))(loggerCounters)
+          val serviceLogger = new LoggerWithMetrics[IO](LoggerFactory.getLogger(LogsCounter.getClass))(logsCounter)
+          val versionServiceLogger = new LoggerWithMetrics[IO](LoggerFactory.getLogger(LogsCounter.getClass))(logsCounter)
 
-          val repo: TodoRepo[IO] = new TodoRepoDoobieImpl(transactor)(messagesRepoLogger)
-          val healthCheckService: HealthCheckService[IO] = new HealthCheckServiceImpl[IO](healthCheckServiceLogger)
-          val messagesService: TodoService[IO] = new TodoServiceImpl[IO](repo, TodoFetch.source(repo))(messagesServiceLogger)
+          val todoRepo: TodoRepo[IO] = TodoRepoDoobieImpl(transactor, logsCounter)
+          val healthCheckService: HealthCheckService[IO] = HealthCheckServiceImpl[IO](logsCounter)
+          val todoService: TodoService[IO] = new TodoServiceImpl[IO](todoRepo)(serviceLogger)
           val versionService: VersionService[IO] = new VersionServiceImpl[IO](versionServiceLogger)
 
-          val handler: http.Handler[IO] = new HandlerImpl[IO](messagesService, healthCheckService, versionService)
+          val handler: http.Handler[IO] = new HandlerImpl[IO](todoService, healthCheckService, versionService)
 
           val router = Router[IO](
             "/api" -> Metrics[IO](metrics)(handler.routes),
@@ -57,12 +57,15 @@ object Main extends IOApp with LazyLogging {
           )
 
           http.server(CORS(router).orNotFound)(ec)
-        }
       }
     } yield ExitCode.Success
   }
 
-  def resources[F[_]: Async: ContextShift](
+  def resources[
+    F[_]
+    : Async
+    : ContextShift
+  ](
     config: AppConfig.Config
   ): Resource[F, (ExecutionContext, HikariTransactor[F], PrometheusExportService[F],  MetricsOps[F])] = {
     for {

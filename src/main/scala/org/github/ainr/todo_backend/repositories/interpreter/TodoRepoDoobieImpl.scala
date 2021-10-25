@@ -3,19 +3,18 @@ package org.github.ainr.todo_backend.repositories.interpreter
 import cats.effect.Bracket
 import cats.syntax.all.*
 import doobie.implicits.*
-import doobie.refined.implicits.*
-import doobie.util.fragment.Fragment
 import doobie.util.transactor.Transactor
-import org.github.ainr.todo_backend.domain.{Id, Title, TodoItem}
+import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
+import org.github.ainr.todo_backend.infrastructure.logging.interpreters.LoggerWithMetrics
 import org.github.ainr.todo_backend.infrastructure.logging.{Labels, Logger}
+import org.github.ainr.todo_backend.infrastructure.metrics.LogsCounter
 import org.github.ainr.todo_backend.repositories.TodoRepo
-import TodoRepoDoobieImpl.SQL
+import org.slf4j.LoggerFactory
 
 class TodoRepoDoobieImpl[
   F[_]
 ](
-  xa: Transactor[F]
-)(
+  xa: Transactor[F],
   logger: Logger[F] & Labels[F]
 )(
   implicit
@@ -24,50 +23,87 @@ class TodoRepoDoobieImpl[
 
   override def getAllTodoItems: F[List[TodoItem]] =
     SQL
-      .getAllTodoItems
-      .query[TodoItem]
-      .stream
-      .take(100) // todo ???
-      .compile
-      .toList
-      .transact(xa) <* logger.info("")
+      .getAll
+      .to[List]
+      .transact(xa) <* logger.info("Get all todo items")
 
   override def getTodoItemById(id: Id): F[Option[TodoItem]] =
     SQL
-      .getTodoItemById(id)
-      .query[TodoItem]
+      .getById(id)
       .option
-      .transact(xa) <* logger.info("")
+      .transact(xa) <* logger.info(s"Get todo item by Id ${id.value}")
 
-  override def insertTodoItem(title: Title): F[Option[Id]] =
+  override def createTodoItem(todo: TodoPayload): F[TodoItem] =
     SQL
-      .insertTodoItem(title)
-      .query[Id]
-      .option
-      .transact(xa) <* logger.info("")
+      .create(todo)
+      .withUniqueGeneratedKeys[Long]("id")
+      .map(id => TodoItem(Id(id), todo))
+      .transact(xa) <* logger.info("Create todo item")
 
-  override def updateTodoItem(item: TodoItem): F[Unit] = ???
+  override def updateTodoItem(item: TodoItem): F[Unit] =
+    SQL
+      .update(item)
+      .run
+      .transact(xa)
+      .as(())
 
-  override def deleteAllTodoItems(): F[Unit] = ???
+  override def deleteAllTodoItems(): F[Unit] =
+    SQL
+      .deleteAll()
+      .run
+      .transact(xa)
+      .as(())
 
-  override def deleteTodoItemById(id: Id): F[Unit] = ???
+  override def deleteTodoItemById(id: Id): F[Unit] =
+    SQL
+      .deleteById(id)
+      .run
+      .transact(xa)
+      .as(())
 }
 
 object TodoRepoDoobieImpl {
-
-  object SQL {
-    def getAllTodoItems: Fragment = sql"""SELECT id, title FROM todo"""
-
-    def getTodoItemById(id: Id): Fragment = sql"""SELECT id, title FROM todo WHERE id=$id"""
-
-    def insertTodoItem(title: Title): Fragment = sql"""INSERT INTO todo (title) VALUES ($title) RETURNING id"""
-
-    def updateTodoItem(item: TodoItem): Fragment = sql"""UPDATE todo SET title = ${item.title} where id = ${item.id}"""
-
-    def deleteAllTodoItems(): Fragment = sql"""TRUNCATE todo"""
-
-    def deleteTodoItemById(id: Id): Fragment = sql"""DELETE from todo WHERE id = $id"""
+  def apply[F[_]](
+    transactor: Transactor[F],
+    logsCounter: LogsCounter[F]
+  )(
+    implicit
+    bracket: Bracket[F, Throwable]
+  ): TodoRepo[F] = {
+    val logger = new LoggerWithMetrics[F](LoggerFactory.getLogger(TodoRepoDoobieImpl.getClass))(logsCounter)
+    new TodoRepoDoobieImpl(transactor, logger)
   }
 }
 
+object SQL {
+  def getAll: doobie.Query0[TodoItem] =
+    sql"""SELECT id, title, completed, ordering
+          FROM todo
+          """.query[TodoItem]
 
+  def getById(id: Id): doobie.Query0[TodoItem] =
+    sql"""SELECT id, title, completed, ordering
+          FROM todo WHERE id = ${id.value}
+          """.query[TodoItem]
+
+  def create(todo: TodoPayload): doobie.Update0 =
+    sql"""INSERT INTO todo (title, completed, ordering)
+          VALUES (${todo.title}, ${todo.completed}, ${todo.ordering})
+          """.update
+
+  def update(item: TodoItem): doobie.Update0 =
+    sql"""UPDATE todo SET
+          title = ${item.payload.title},
+          completed = ${item.payload.completed},
+          ordering = ${item.payload.ordering},
+          WHERE id = ${item.id.value}
+          """.update
+
+  def deleteAll(): doobie.Update0 =
+    sql"""TRUNCATE TABLE todo""".update
+
+  def deleteById(id: Id): doobie.Update0 =
+    sql"""DELETE from todo
+          WHERE id = ${id.value}
+          """.update
+}

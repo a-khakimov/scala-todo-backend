@@ -1,6 +1,6 @@
 package org.github.ainr.todo_backend.services.todo
 
-import org.github.ainr.todo_backend.domain.{Id, Title, TodoItem}
+import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
 
 
 trait TodoService[F[_]] {
@@ -9,9 +9,9 @@ trait TodoService[F[_]] {
 
   def getTodoItemById(id: Id): F[Option[TodoItem]]
 
-  def createTodoItem(title: Title): F[Unit]
+  def createTodoItem(todo: TodoPayload): F[TodoItem]
 
-  def changeTodoItemById(item: TodoItem): F[Option[TodoItem]]
+  def changeTodoItemById(item: TodoItem): F[Unit]
 
   def deleteAllTodoItems(): F[Unit]
 
