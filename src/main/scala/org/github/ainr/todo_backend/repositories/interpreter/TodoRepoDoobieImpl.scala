@@ -31,14 +31,14 @@ class TodoRepoDoobieImpl[
     SQL
       .getById(id)
       .option
-      .transact(xa) <* logger.info(s"Get todo item by Id ${id.value}")
+      .transact(xa)
 
   override def createTodoItem(todo: TodoPayload): F[TodoItem] =
     SQL
       .create(todo)
       .withUniqueGeneratedKeys[Long]("id")
       .map(id => TodoItem(Id(id), todo))
-      .transact(xa) <* logger.info("Create todo item")
+      .transact(xa)
 
   override def updateTodoItem(item: TodoItem): F[Unit] =
     SQL
@@ -95,7 +95,7 @@ object SQL {
     sql"""UPDATE todo SET
           title = ${item.payload.title},
           completed = ${item.payload.completed},
-          ordering = ${item.payload.ordering},
+          ordering = ${item.payload.ordering}
           WHERE id = ${item.id.value}
           """.update
 

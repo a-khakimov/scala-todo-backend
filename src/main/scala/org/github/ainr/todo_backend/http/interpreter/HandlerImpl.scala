@@ -6,7 +6,7 @@ import io.circe.generic.auto.*
 import io.circe.syntax.*
 import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
 import org.github.ainr.todo_backend.http.Handler
-import org.github.ainr.todo_backend.http.interpreter.HandlerImpl.{TodoPostRequest, TodoResponse}
+import org.github.ainr.todo_backend.http.interpreter.HandlerImpl.{TodoPatchRequest, TodoPostRequest, TodoResponse}
 import org.github.ainr.todo_backend.services.healthcheck.HealthCheckService
 import org.github.ainr.todo_backend.services.todo.TodoService
 import org.github.ainr.todo_backend.services.version.VersionService
@@ -67,29 +67,31 @@ final class HandlerImpl[
     case GET -> Root =>
       todoService
         .getAllTodoItems
-        .flatMap(items => Ok(items.asJson))
+        .flatMap(items => Ok(items.map(item => TodoResponse("http://localhost:5555/api", item)).asJson))
 
     case GET -> Root / LongVar(id) =>
       todoService
         .getTodoItemById(Id(id))
         .flatMap { itemOpt =>
-          itemOpt.fold(NotFound())(item => Ok(item.asJson))
+          itemOpt.fold(NotFound())(item => Ok(TodoResponse("http://localhost:5555/api", item).asJson))
         }
 
     case req @ POST -> Root =>
       req.decode[TodoPostRequest] { request =>
         todoService
           .createTodoItem(request.asTodoPayload)
-          .map(item => TodoResponse("foo", item).asJson)
+          .map(item => TodoResponse("http://localhost:5555/api", item).asJson)
           .flatMap(Created(_))
       }
 
-    case req @ PATCH -> Root / LongVar(_) =>
-      req.decode[TodoItem] { payload =>
+    case req @ PATCH -> Root / LongVar(id) =>
+      req.decode[TodoPatchRequest] { request =>
         todoService
-          .changeTodoItemById(payload)
-          .map(_.asJson)
-          .flatMap(Ok(_))
+          .changeTodoItemById(Id(id), request.title, request.completed, request.order)
+          .flatMap {
+            case Right(item) => Ok(TodoResponse("http://localhost:5555/api", item).asJson)
+            case Left(_) => NotFound()
+          }
       }
 
     case DELETE -> Root =>
