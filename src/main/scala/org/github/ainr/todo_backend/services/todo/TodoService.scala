@@ -6,7 +6,7 @@ import org.github.ainr.todo_backend.services.todo.TodoService.TodoServiceError
 
 trait TodoService[F[_]] {
 
-  def getAllTodoItems: F[List[TodoItem]]
+  def getAllTodoItems(): F[List[TodoItem]]
 
   def getTodoItemById(id: Id): F[Option[TodoItem]]
 

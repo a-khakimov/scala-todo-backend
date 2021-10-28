@@ -66,7 +66,7 @@ final class HandlerImpl[
 
     case GET -> Root =>
       todoService
-        .getAllTodoItems
+        .getAllTodoItems()
         .flatMap(items => Ok(items.map(item => TodoResponse("http://localhost:5555/api", item)).asJson))
 
     case GET -> Root / LongVar(id) =>

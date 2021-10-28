@@ -5,6 +5,7 @@ import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import org.github.ainr.todo_backend.config.AppConfig
 import org.github.ainr.todo_backend.http.interpreter.HandlerImpl
+import org.github.ainr.todo_backend.http.todo.{TodoHandler, endpoints}
 import org.github.ainr.todo_backend.infrastructure.logging.LazyLogging
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.Logger.instance
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.{Logger, LoggerWithMetrics}
@@ -23,6 +24,7 @@ import org.http4s.metrics.prometheus.{Prometheus, PrometheusExportService}
 import org.http4s.server.Router
 import org.http4s.server.middleware.{CORS, Metrics}
 import org.slf4j.LoggerFactory
+import sttp.tapir.server.http4s.Http4sServerInterpreter
 
 import scala.concurrent.ExecutionContext
 
@@ -50,9 +52,18 @@ object TodoAppLauncher extends IOApp with LazyLogging {
           val versionService: VersionService[IO] = new VersionServiceImpl[IO](versionServiceLogger)
 
           val handler: http.Handler[IO] = new HandlerImpl[IO](todoService, healthCheckService, versionService)
+          val todoHandler = TodoHandler[IO](todoService)
+
+          println(handler)
+
+          import sttp.tapir.openapi.circe.yaml._
+          println(endpoints.docs.toYaml)
+
+          val testTapirRoutes =
+            Http4sServerInterpreter.toRoutes(endpoints.getAllTodoItems)(_ => todoHandler.getAllTodoItems())
 
           val router = Router[IO](
-            "/api" -> Metrics[IO](metrics)(handler.routes),
+            "/api" -> Metrics[IO](metrics)(testTapirRoutes),
             "/" -> metricsService.routes
           )
 

@@ -17,7 +17,7 @@ final class TodoServiceImpl[
   logger: Logger[F] & Labels[F]
 ) extends TodoService[F] {
 
-  override def getAllTodoItems: F[List[TodoItem]] =
+  override def getAllTodoItems(): F[List[TodoItem]] =
     repo.getAllTodoItems <* logger.info("Get all todo items")
 
   override def getTodoItemById(id: Id): F[Option[TodoItem]] =

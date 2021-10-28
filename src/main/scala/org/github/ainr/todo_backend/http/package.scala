@@ -9,7 +9,11 @@ import scala.concurrent.ExecutionContext
 
 package object http {
 
-  def server[F[_]: Timer: ConcurrentEffect](
+  def server[
+    F[_]
+    : Timer
+    : ConcurrentEffect
+  ](
     service: Kleisli[F, Request[F], Response[F]]
   )(
     ec: ExecutionContext
