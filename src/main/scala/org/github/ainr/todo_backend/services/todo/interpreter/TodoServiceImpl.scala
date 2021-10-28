@@ -1,6 +1,6 @@
 package org.github.ainr.todo_backend.services.todo.interpreter
 
-import cats.syntax.all.*
+import cats.syntax.all._
 import cats.effect.Concurrent
 import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
 import org.github.ainr.todo_backend.infrastructure.logging.{Labels, Logger}

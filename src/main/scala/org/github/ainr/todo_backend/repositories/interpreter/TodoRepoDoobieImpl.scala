@@ -1,8 +1,8 @@
 package org.github.ainr.todo_backend.repositories.interpreter
 
 import cats.effect.Bracket
-import cats.syntax.all.*
-import doobie.implicits.*
+import cats.syntax.all._
+import doobie.implicits._
 import doobie.util.transactor.Transactor
 import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.LoggerWithMetrics

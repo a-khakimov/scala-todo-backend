@@ -1,13 +1,15 @@
 package org.github.ainr.todo_backend.http.todo
 
-import io.circe.generic.auto.*
-import org.github.ainr.todo_backend.http.interpreter.HandlerImpl.TodoResponse
+import io.circe.generic.auto._
+import org.github.ainr.todo_backend.http.interpreter.HandlerImpl.{TodoPatchRequest, TodoPostRequest, TodoResponse}
 import sttp.model.StatusCode
-import sttp.tapir.*
+import sttp.tapir._
 import sttp.tapir.docs.openapi.OpenAPIDocsInterpreter
-import sttp.tapir.generic.auto.*
-import sttp.tapir.json.circe.*
-import sttp.tapir.openapi.OpenAPI
+import sttp.tapir.generic.auto._
+import sttp.tapir.json.circe._
+import sttp.tapir.openapi.{OpenAPI, Server}
+import sttp.tapir.openapi.circe.yaml.RichOpenAPI
+import sttp.tapir.swagger.http4s.SwaggerHttp4s
 
 object endpoints {
 
@@ -31,5 +33,51 @@ object endpoints {
       .get
       .out(anyJsonBody[List[TodoResponse]])
 
-  val docs: OpenAPI = OpenAPIDocsInterpreter.toOpenAPI(getAllTodoItems, "Todo Backend", "1.0")
+  val getTodoItemById: Endpoint[Long, ErrorInfo, TodoResponse, Any] =
+    baseEndpoint
+      .get
+      .in(path[Long])
+      .out(jsonBody[TodoResponse])
+
+  val createTodoItem: Endpoint[TodoPostRequest, ErrorInfo, TodoResponse, Any] =
+    baseEndpoint
+      .post
+      .in(jsonBody[TodoPostRequest])
+      .out(jsonBody[TodoResponse])
+
+  val changeTodoItemById: Endpoint[(Long, TodoPatchRequest), ErrorInfo, TodoResponse, Any] =
+    baseEndpoint
+      .patch
+      .in(path[Long])
+      .in(jsonBody[TodoPatchRequest])
+      .out(jsonBody[TodoResponse])
+
+  val deleteAllTodoItems: Endpoint[Unit, ErrorInfo, Unit, Any] =
+    baseEndpoint
+      .delete
+
+  val deleteTodoItemById: Endpoint[Long, ErrorInfo, Unit, Any] =
+    baseEndpoint
+      .delete
+      .in(path[Long])
+
+  private val docs: OpenAPI = OpenAPIDocsInterpreter.toOpenAPI(
+    List(
+      getAllTodoItems,
+      getTodoItemById,
+      createTodoItem,
+      changeTodoItemById,
+      deleteAllTodoItems,
+      deleteTodoItemById
+    ),
+    "Todo Backend",
+    "1.0"
+  ).servers(
+    List(
+      Server("from config")
+        .description("Prod")
+    )
+  )
+
+  val docsEndpoint = new SwaggerHttp4s(docs.toYaml)
 }

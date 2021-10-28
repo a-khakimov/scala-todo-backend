@@ -1,7 +1,7 @@
 package org.github.ainr.todo_backend.config
 
 import cats.effect.Sync
-import cats.syntax.all.*
+import cats.syntax.all._
 import pureconfig.error.ConfigReaderException
 import pureconfig.generic.semiauto.deriveConvert
 import pureconfig.{ConfigConvert, ConfigSource}

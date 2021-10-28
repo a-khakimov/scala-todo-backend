@@ -1,7 +1,7 @@
 package org.github.ainr.todo_backend.infrastructure.logging.interpreters
 
 import cats.Applicative
-import cats.syntax.all.*
+import cats.syntax.all._
 import org.github.ainr.todo_backend.infrastructure.logging.{Labels, Logger}
 import org.github.ainr.todo_backend.infrastructure.metrics.LogsCounter
 import org.slf4j.Logger as slf4jLogger

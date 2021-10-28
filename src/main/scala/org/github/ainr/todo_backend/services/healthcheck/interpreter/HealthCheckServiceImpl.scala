@@ -1,7 +1,7 @@
 package org.github.ainr.todo_backend.services.healthcheck.interpreter
 
 import cats.Applicative
-import cats.syntax.all.*
+import cats.syntax.all._
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.LoggerWithMetrics
 import org.github.ainr.todo_backend.infrastructure.logging.{Labels, Logger}
 import org.github.ainr.todo_backend.infrastructure.metrics.LogsCounter

@@ -1,7 +1,7 @@
 package org.github.ainr.todo_backend.infrastructure.metrics
 
 import cats.Applicative
-import cats.syntax.all.*
+import cats.syntax.all._
 import io.prometheus.client.{CollectorRegistry, Counter}
 
 

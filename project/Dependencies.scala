@@ -19,6 +19,7 @@ object Dependencies {
     val newtype          = "0.4.4"
     val refined          = "0.9.27"
     val scalatest        = "3.2.9"
+    val tapir            = "0.17.20"
   }
 
   import Versions._
@@ -43,10 +44,12 @@ object Dependencies {
       "org.tpolecat"                 %% "doobie-postgres"     % doobie,
       "org.tpolecat"                 %% "doobie-hikari"       % doobie,
       "org.tpolecat"                 %% "doobie-refined"      % doobie,
-      "com.softwaremill.sttp.tapir"  %% "tapir-http4s-server" % "0.17.20",
-      "com.softwaremill.sttp.tapir"  %% "tapir-json-circe"    % "0.17.20",
-      "com.softwaremill.sttp.tapir"  %% "tapir-openapi-docs" % "0.17.20",
-      "com.softwaremill.sttp.tapir"  %% "tapir-openapi-circe-yaml" % "0.17.20",
+      "com.softwaremill.sttp.tapir"  %% "tapir-http4s-server" % tapir,
+      "com.softwaremill.sttp.tapir"  %% "tapir-json-circe"    % tapir,
+      "com.softwaremill.sttp.tapir"  %% "tapir-openapi-docs"  % tapir,
+      "com.softwaremill.sttp.tapir"  %% "tapir-openapi-circe-yaml" % tapir,
+      "com.softwaremill.sttp.tapir"  %% "tapir-swagger-ui-http4s" % tapir,
+      "com.softwaremill.sttp.tapir"  %% "tapir-redoc-http4s" % tapir,
       "org.http4s"                   %% "http4s-blaze-server" % http4s,
       "org.http4s"                   %% "http4s-circe"        % http4s,
       "org.http4s"                   %% "http4s-dsl"          % http4s,

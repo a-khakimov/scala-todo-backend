@@ -1,6 +1,6 @@
 package org.github.ainr.todo_backend.services.version.interpreter
 
-import cats.syntax.all.*
+import cats.syntax.all._
 import cats.Applicative
 import org.github.ainr.todo_backend.infrastructure.logging.{Labels, Logger}
 import org.github.ainr.todo_backend.services.version.{Version, VersionService}

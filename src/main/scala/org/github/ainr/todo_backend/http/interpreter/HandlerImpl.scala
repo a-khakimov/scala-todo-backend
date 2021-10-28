@@ -1,9 +1,9 @@
 package org.github.ainr.todo_backend.http.interpreter
 
 import cats.effect.Sync
-import cats.syntax.all.*
-import io.circe.generic.auto.*
-import io.circe.syntax.*
+import cats.syntax.all._
+import io.circe.generic.auto._
+import io.circe.syntax._
 import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
 import org.github.ainr.todo_backend.http.Handler
 import org.github.ainr.todo_backend.http.interpreter.HandlerImpl.{TodoPatchRequest, TodoPostRequest, TodoResponse}
@@ -11,7 +11,7 @@ import org.github.ainr.todo_backend.services.healthcheck.HealthCheckService
 import org.github.ainr.todo_backend.services.todo.TodoService
 import org.github.ainr.todo_backend.services.version.VersionService
 import org.http4s.HttpRoutes
-import org.http4s.circe.*
+import org.http4s.circe._
 import org.http4s.circe.CirceEntityCodec.circeEntityDecoder
 import org.http4s.dsl.Http4sDsl
 
@@ -60,7 +60,7 @@ final class HandlerImpl[
  ) extends Handler[F] {
 
   object dsl extends Http4sDsl[F]
-  import dsl.*
+  import dsl._
 
   override def routes: HttpRoutes[F] = HttpRoutes.of[F] {
 
