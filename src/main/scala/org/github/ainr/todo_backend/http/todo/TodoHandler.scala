@@ -3,7 +3,6 @@ package org.github.ainr.todo_backend.http.todo
 import cats.Applicative
 import cats.syntax.all._
 import org.github.ainr.todo_backend.domain.Id
-import org.github.ainr.todo_backend.http.interpreter.HandlerImpl.{TodoPatchRequest, TodoPostRequest, TodoResponse}
 import org.github.ainr.todo_backend.http.todo.endpoints.{ErrorInfo, NotFound}
 import org.github.ainr.todo_backend.services.todo.TodoService
 
@@ -50,21 +49,33 @@ object TodoHandler {
       maybeItem <- todoService.getTodoItemById(Id(id))
       response = maybeItem.map(
         TodoResponse("http://localhost:5555/api", _).asRight
-      ).getOrElse(
-        NotFound("Hui").asLeft
-      )
+      ).getOrElse(NotFound.asLeft)
     } yield response
 
     override def createTodoItem(request: TodoPostRequest): F[Either[ErrorInfo, TodoResponse]] =
-      (NotFound("Hui") : ErrorInfo).asLeft[TodoResponse].pure[F]
+      todoService
+        .createTodoItem(request.asTodoPayload)
+        .map(item => TodoResponse("http://localhost:5555/api", item).asRight)
 
-    override def changeTodoItemById(request: (Long, TodoPatchRequest)): F[Either[ErrorInfo, TodoResponse]] =
-      (NotFound("Hui") : ErrorInfo).asLeft[TodoResponse].pure[F]
+    override def changeTodoItemById(
+      request: (Long, TodoPatchRequest)
+    ): F[Either[ErrorInfo, TodoResponse]] = {
+      val (id, req) = request
+      todoService
+        .changeTodoItemById(Id(id), req.title, req.completed, req.order)
+        .map {
+          case Right(item) => TodoResponse("http://localhost:5555/api", item).asRight
+          case Left(_) => NotFound.asLeft
+        }
+    }
 
     override def deleteAllTodoItems(): F[Either[ErrorInfo, Unit]] =
-      (NotFound("Hui") : ErrorInfo).asLeft[Unit].pure[F]
+      todoService.deleteAllTodoItems().map(_.asRight)
 
     override def deleteTodoItemById(id: Long): F[Either[ErrorInfo, Unit]] =
-      (NotFound("Hui") : ErrorInfo).asLeft[Unit].pure[F]
+      todoService.deleteTodoItemById(Id(id)).map {
+        case Right(_) => ().asRight
+        case Left(_) => NotFound.asLeft
+      }
   }
 }

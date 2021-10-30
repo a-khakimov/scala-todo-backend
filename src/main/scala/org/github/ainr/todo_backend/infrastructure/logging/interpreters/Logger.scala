@@ -9,12 +9,18 @@ import scala.language.implicitConversions
 
 object Logger {
 
-  def apply[F[_]](implicit logger: Logger[F]): Logger[F] = logger
+  def apply[
+    F[_]
+  ](
+    implicit
+    logger: Logger[F]
+  ): Logger[F] = logger
 
   implicit def instance[F[_]: Applicative](
     clazz: Class[?]
   )(
-    implicit logger: slf4jLogger = LoggerFactory.getLogger(clazz)
+    implicit
+    logger: slf4jLogger = LoggerFactory.getLogger(clazz)
   ): Logger[F] = new Logger[F] {
 
     def error(msg: String): F[Unit] = logger.error(msg).pure[F]
@@ -32,15 +38,15 @@ object Logger {
     implicit logger: slf4jLogger
   ): Logger[F] = new Logger[F] {
 
-    def error(msg: String)                    : F[Unit] = logger.error(msg     ).pure[F]
+    def error(msg: String): F[Unit] = logger.error(msg).pure[F]
 
-    def error(msg: String, err: Throwable)    : F[Unit] = logger.error(msg, err).pure[F]
+    def error(msg: String, err: Throwable): F[Unit] = logger.error(msg, err).pure[F]
 
-    def warn (msg: String)                    : F[Unit] = logger.warn (msg     ).pure[F]
+    def warn (msg: String): F[Unit] = logger.warn(msg).pure[F]
 
-    def info (msg: String)                    : F[Unit] = logger.info (msg     ).pure[F]
+    def info (msg: String): F[Unit] = logger.info(msg).pure[F]
 
-    def debug(msg: String)                    : F[Unit] = logger.debug(msg     ).pure[F]
+    def debug(msg: String): F[Unit] = logger.debug(msg).pure[F]
   }
 }
 

@@ -7,7 +7,8 @@ object HttpConfig {
 
   final case class Config(
     port: Int,
-    baseUrl: String
+    baseUrl: String,
+    version: String
   ) {
     override def toString: String = s"Http configuration: port[$port] baseUrl[$baseUrl]"
   }

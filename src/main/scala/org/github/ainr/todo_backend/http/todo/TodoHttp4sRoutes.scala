@@ -46,11 +46,11 @@ object TodoHttp4sRoutes {
         endpoints.deleteTodoItemById
       )(todoHandler.deleteTodoItemById _)
 
-          getAllTodoItems
-      <+> getTodoItemById
+    getTodoItemById
+      <+> getAllTodoItems
       <+> createTodoItem
       <+> changeTodoItemById
-      <+> deleteAllTodoItems
       <+> deleteTodoItemById
+      <+> deleteAllTodoItems
   }
 }

@@ -4,26 +4,20 @@ import cats.effect.{Async, Blocker, ContextShift, ExitCode, IO, IOApp, Resource}
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import org.github.ainr.todo_backend.config.AppConfig
-import org.github.ainr.todo_backend.http.interpreter.HandlerImpl
+import org.github.ainr.todo_backend.http.todo.endpoints.docs
 import org.github.ainr.todo_backend.http.todo.{TodoHandler, TodoHttp4sRoutes}
 import org.github.ainr.todo_backend.infrastructure.logging.LazyLogging
+import org.github.ainr.todo_backend.infrastructure.logging.interpreters.Logger
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.Logger.instance
-import org.github.ainr.todo_backend.infrastructure.logging.interpreters.{Logger, LoggerWithMetrics}
 import org.github.ainr.todo_backend.infrastructure.metrics.LogsCounter
-import org.github.ainr.todo_backend.repositories.TodoRepo
-import org.github.ainr.todo_backend.repositories.interpreter.TodoRepoDoobieImpl
-import org.github.ainr.todo_backend.services.healthcheck.HealthCheckService
-import org.github.ainr.todo_backend.services.healthcheck.interpreter.HealthCheckServiceImpl
+import org.github.ainr.todo_backend.repositories.todo.TodoRepo
 import org.github.ainr.todo_backend.services.todo.TodoService
-import org.github.ainr.todo_backend.services.todo.interpreter.TodoServiceImpl
-import org.github.ainr.todo_backend.services.version.VersionService
-import org.github.ainr.todo_backend.services.version.interpreter.VersionServiceImpl
 import org.http4s.implicits.http4sKleisliResponseSyntaxOptionT
 import org.http4s.metrics.MetricsOps
 import org.http4s.metrics.prometheus.{Prometheus, PrometheusExportService}
 import org.http4s.server.Router
 import org.http4s.server.middleware.{CORS, Metrics}
-import org.slf4j.LoggerFactory
+import sttp.tapir.swagger.http4s.SwaggerHttp4s
 
 import scala.concurrent.ExecutionContext
 
@@ -42,22 +36,15 @@ object TodoAppLauncher extends IOApp with LazyLogging {
 
           val logsCounter: LogsCounter[IO] = LogsCounter[IO](metricsService.collectorRegistry)
 
-          val serviceLogger = new LoggerWithMetrics[IO](LoggerFactory.getLogger(LogsCounter.getClass))(logsCounter)
-          val versionServiceLogger = new LoggerWithMetrics[IO](LoggerFactory.getLogger(LogsCounter.getClass))(logsCounter)
+          val todoRepo: TodoRepo[IO] = TodoRepo(transactor, logsCounter)
+          val todoService: TodoService[IO] = TodoService[IO](todoRepo)(logsCounter)
 
-          val todoRepo: TodoRepo[IO] = TodoRepoDoobieImpl(transactor, logsCounter)
-          val healthCheckService: HealthCheckService[IO] = HealthCheckServiceImpl[IO](logsCounter)
-          val todoService: TodoService[IO] = new TodoServiceImpl[IO](todoRepo)(serviceLogger)
-          val versionService: VersionService[IO] = new VersionServiceImpl[IO](versionServiceLogger)
-
-          val handler: http.Handler[IO] = new HandlerImpl[IO](todoService, healthCheckService, versionService)
           val todoHandler = TodoHandler[IO](todoService)
-
-          println(handler)
 
           val router = Router[IO](
             "/api" -> Metrics[IO](metrics)(TodoHttp4sRoutes(todoHandler)),
-            "/" -> metricsService.routes
+            "/" -> new SwaggerHttp4s(docs, "swagger").routes,
+            "/metrics" -> metricsService.routes
           )
 
           http.server(CORS(router).orNotFound)(ec)
