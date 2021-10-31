@@ -3,9 +3,8 @@ package org.github.ainr.todo_backend
 import cats.effect.{Async, Blocker, ContextShift, ExitCode, IO, IOApp, Resource}
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
-import org.github.ainr.todo_backend.config.AppConfig
-import org.github.ainr.todo_backend.http.todo.endpoints.docs
-import org.github.ainr.todo_backend.http.todo.{TodoHandler, TodoHttp4sRoutes}
+import org.github.ainr.todo_backend.config.App
+import org.github.ainr.todo_backend.http.todo.{TodoHandler, TodoHttp4sRoutes, endpoints}
 import org.github.ainr.todo_backend.infrastructure.logging.LazyLogging
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.Logger
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.Logger.instance
@@ -27,7 +26,7 @@ object TodoAppLauncher extends IOApp with LazyLogging {
   override def run(args: List[String]): IO[ExitCode] = {
     for {
       _ <- Logger[IO].info("Application running")
-      config <- AppConfig.load[IO]
+      config <- App.load[IO]
       _ <- Logger[IO].info(s"${config.http}")
       _ <- Logger[IO].info(s"${config.database}")
       _ <- db.migrate[IO](config.database)
@@ -39,15 +38,15 @@ object TodoAppLauncher extends IOApp with LazyLogging {
           val todoRepo: TodoRepo[IO] = TodoRepo(transactor, logsCounter)
           val todoService: TodoService[IO] = TodoService[IO](todoRepo)(logsCounter)
 
-          val todoHandler = TodoHandler[IO](todoService)
+          val todoHandler = TodoHandler[IO](todoService, config.http)
 
           val router = Router[IO](
             "/api" -> Metrics[IO](metrics)(TodoHttp4sRoutes(todoHandler)),
-            "/" -> new SwaggerHttp4s(docs, "swagger").routes,
+            "/" -> new SwaggerHttp4s(endpoints.openApiYaml(config.http), "swagger").routes,
             "/metrics" -> metricsService.routes
           )
 
-          http.server(CORS(router).orNotFound)(ec)
+          http.server(config.http)(CORS(router).orNotFound)(ec)
       }
     } yield ExitCode.Success
   }
@@ -57,7 +56,7 @@ object TodoAppLauncher extends IOApp with LazyLogging {
     : Async
     : ContextShift
   ](
-    config: AppConfig.Config
+    config: App.Config
   ): Resource[F, (ExecutionContext, HikariTransactor[F], PrometheusExportService[F],  MetricsOps[F])] = {
     for {
       blocker <- Blocker[F]

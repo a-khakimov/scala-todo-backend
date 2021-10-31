@@ -6,7 +6,7 @@ import cats.implicits.catsSyntaxApplicativeId
 import doobie.hikari.HikariTransactor
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.output.MigrateResult
-import org.github.ainr.todo_backend.config.DatabaseConfig
+import org.github.ainr.todo_backend.config.Database
 
 import scala.concurrent.ExecutionContext
 
@@ -17,7 +17,7 @@ package object db {
     : Async
     : ContextShift
   ](
-    config: DatabaseConfig.Config
+    config: Database.Config
   )(
     ec: ExecutionContext,
     blocker: Blocker
@@ -35,7 +35,7 @@ package object db {
     F[_]
     : Applicative
   ](
-    config: DatabaseConfig.Config
+    config: Database.Config
   ): F[MigrateResult] =
     Flyway
       .configure()

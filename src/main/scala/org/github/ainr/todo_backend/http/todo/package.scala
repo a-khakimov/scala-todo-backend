@@ -1,17 +1,15 @@
 package org.github.ainr.todo_backend.http
 
-import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
+import org.github.ainr.todo_backend.domain.{TodoItem, TodoPayload}
 
 package object todo {
 
-  final case class TodoPostRequest(title: String, order: Option[Int] = None) {
-
-    def asTodoItem(id: Id): TodoItem = TodoItem(id, this.asTodoPayload)
+  final case class CreateTodoItemRequest(title: String, order: Option[Int] = None) {
 
     def asTodoPayload: TodoPayload = TodoPayload(title, completed = false, order)
   }
 
-  final case class TodoPatchRequest(
+  final case class ChangeTodoItemRequest(
     title: Option[String] = None,
     completed: Option[Boolean] = None,
     order: Option[Int] = None
@@ -29,7 +27,7 @@ package object todo {
     def apply(path: String, item: TodoItem): TodoResponse =
       TodoResponse(
         item.id.value,
-        s"$path/${item.id.value}",
+        s"$path/${item.id}",
         item.payload.title,
         item.payload.completed,
         item.payload.ordering,

@@ -3,15 +3,14 @@ package org.github.ainr.todo_backend.config
 import pureconfig.ConfigConvert
 import pureconfig.generic.semiauto.deriveConvert
 
-object DatabaseConfig {
+object Http {
 
   final case class Config(
-    url: String,
-    driver: String,
-    user: String,
-    password: String
+    port: Int,
+    host: String,
+    version: String
   ) {
-    override def toString: String = s"Database configuration: url[$url] driver[$driver] user[$user] password[****]"
+    override def toString: String = s"Http configuration: host[$host] port[$port]"
   }
 
   implicit val convert: ConfigConvert[Config] = deriveConvert

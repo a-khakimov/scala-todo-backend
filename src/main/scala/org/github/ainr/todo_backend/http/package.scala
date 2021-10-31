@@ -2,6 +2,7 @@ package org.github.ainr.todo_backend
 
 import cats.data.Kleisli
 import cats.effect.{ConcurrentEffect, Timer}
+import org.github.ainr.todo_backend.config.Http
 import org.http4s.{Request, Response}
 import org.http4s.server.blaze.BlazeServerBuilder
 
@@ -14,12 +15,14 @@ package object http {
     : Timer
     : ConcurrentEffect
   ](
+   conf: Http.Config
+  )(
     service: Kleisli[F, Request[F], Response[F]]
   )(
     ec: ExecutionContext
   ): F[Unit] = {
     BlazeServerBuilder[F](ec)
-      .bindHttp(5555, "0.0.0.0")
+      .bindHttp(conf.port)
       .withHttpApp(service)
       .serve
       .compile

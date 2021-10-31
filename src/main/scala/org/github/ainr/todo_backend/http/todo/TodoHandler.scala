@@ -2,6 +2,7 @@ package org.github.ainr.todo_backend.http.todo
 
 import cats.Applicative
 import cats.syntax.all._
+import org.github.ainr.todo_backend.config.Http
 import org.github.ainr.todo_backend.domain.Id
 import org.github.ainr.todo_backend.http.todo.endpoints.{ErrorInfo, NotFound}
 import org.github.ainr.todo_backend.services.todo.TodoService
@@ -10,15 +11,15 @@ trait TodoHandler[F[_]] {
 
   def getAllTodoItems(): F[Either[ErrorInfo, List[TodoResponse]]]
 
-  def getTodoItemById(id: Long): F[Either[ErrorInfo, TodoResponse]]
+  def getTodoItemById(id: Id): F[Either[ErrorInfo, TodoResponse]]
 
-  def createTodoItem(request: TodoPostRequest): F[Either[ErrorInfo, TodoResponse]]
+  def createTodoItem(request: CreateTodoItemRequest): F[Either[ErrorInfo, TodoResponse]]
 
-  def changeTodoItemById(request: (Long, TodoPatchRequest)): F[Either[ErrorInfo, TodoResponse]]
+  def changeTodoItemById(request: (Id, ChangeTodoItemRequest)): F[Either[ErrorInfo, TodoResponse]]
 
   def deleteAllTodoItems(): F[Either[ErrorInfo, Unit]]
 
-  def deleteTodoItemById(id: Long): F[Either[ErrorInfo, Unit]]
+  def deleteTodoItemById(id: Id): F[Either[ErrorInfo, Unit]]
 }
 
 object TodoHandler {
@@ -26,45 +27,49 @@ object TodoHandler {
     F[_]
     : Applicative
   ](
-    todoService: TodoService[F]
+    todoService: TodoService[F],
+    cfg: Http.Config
   ): TodoHandler[F] = {
-    new TodoHandlerImpl[F](todoService)
+    new TodoHandlerImpl[F](todoService, cfg)
   }
 
   final class TodoHandlerImpl[
     F[_]
     : Applicative
   ](
-    todoService: TodoService[F]
+    todoService: TodoService[F],
+    cfg: Http.Config
   ) extends TodoHandler[F] {
+
+    private val url = s"http://${cfg.host}:${cfg.port}/api"
 
     def getAllTodoItems(): F[Either[ErrorInfo, List[TodoResponse]]] = for {
       items <- todoService.getAllTodoItems()
       response = items.map(item =>
-        TodoResponse("http://localhost:5555/api", item)
+        TodoResponse(url, item)
       ).asRight
     } yield response
 
-    override def getTodoItemById(id: Long): F[Either[ErrorInfo, TodoResponse]] = for {
-      maybeItem <- todoService.getTodoItemById(Id(id))
+    override def getTodoItemById(id: Id): F[Either[ErrorInfo, TodoResponse]] = for {
+      maybeItem <- todoService.getTodoItemById(id)
       response = maybeItem.map(
-        TodoResponse("http://localhost:5555/api", _).asRight
+        TodoResponse(url, _).asRight
       ).getOrElse(NotFound.asLeft)
     } yield response
 
-    override def createTodoItem(request: TodoPostRequest): F[Either[ErrorInfo, TodoResponse]] =
+    override def createTodoItem(request: CreateTodoItemRequest): F[Either[ErrorInfo, TodoResponse]] =
       todoService
         .createTodoItem(request.asTodoPayload)
-        .map(item => TodoResponse("http://localhost:5555/api", item).asRight)
+        .map(item => TodoResponse(url, item).asRight)
 
     override def changeTodoItemById(
-      request: (Long, TodoPatchRequest)
+      request: (Id, ChangeTodoItemRequest)
     ): F[Either[ErrorInfo, TodoResponse]] = {
       val (id, req) = request
       todoService
-        .changeTodoItemById(Id(id), req.title, req.completed, req.order)
+        .changeTodoItemById(id, req.title, req.completed, req.order)
         .map {
-          case Right(item) => TodoResponse("http://localhost:5555/api", item).asRight
+          case Right(item) => TodoResponse(url, item).asRight
           case Left(_) => NotFound.asLeft
         }
     }
@@ -72,8 +77,8 @@ object TodoHandler {
     override def deleteAllTodoItems(): F[Either[ErrorInfo, Unit]] =
       todoService.deleteAllTodoItems().map(_.asRight)
 
-    override def deleteTodoItemById(id: Long): F[Either[ErrorInfo, Unit]] =
-      todoService.deleteTodoItemById(Id(id)).map {
+    override def deleteTodoItemById(id: Id): F[Either[ErrorInfo, Unit]] =
+      todoService.deleteTodoItemById(id).map {
         case Right(_) => ().asRight
         case Left(_) => NotFound.asLeft
       }

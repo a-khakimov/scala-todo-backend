@@ -6,11 +6,11 @@ import pureconfig.error.ConfigReaderException
 import pureconfig.generic.semiauto.deriveConvert
 import pureconfig.{ConfigConvert, ConfigSource}
 
-object AppConfig {
+object App {
 
   final case class Config(
-    http: HttpConfig.Config,
-    database: DatabaseConfig.Config
+    http: Http.Config,
+    database: Database.Config
   )
 
   implicit private val convert: ConfigConvert[Config] = deriveConvert
