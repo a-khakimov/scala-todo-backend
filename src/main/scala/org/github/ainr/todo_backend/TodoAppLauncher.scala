@@ -36,9 +36,8 @@ object TodoAppLauncher extends IOApp with LazyLogging {
           val logsCounter: LogsCounter[IO] = LogsCounter[IO](metricsService.collectorRegistry)
 
           val todoRepo: TodoRepo[IO] = TodoRepo(transactor, logsCounter)
-          val todoService: TodoService[IO] = TodoService[IO](todoRepo)(logsCounter)
-
-          val todoHandler = TodoHandler[IO](todoService, config.http)
+          val todoService: TodoService[IO] = TodoService(todoRepo)(logsCounter)
+          val todoHandler: TodoHandler[IO] = TodoHandler(todoService, config.http)
 
           val router = Router[IO](
             "/api" -> Metrics[IO](metrics)(TodoHttp4sRoutes(todoHandler)),

@@ -1,7 +1,7 @@
 package org.github.ainr.todo_backend.services.todo
 
 import cats.effect.Concurrent
-import cats.syntax.all.*
+import cats.syntax.all._
 import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
 import org.github.ainr.todo_backend.infrastructure.logging.interpreters.LoggerWithMetrics
 import org.github.ainr.todo_backend.infrastructure.logging.{Labels, Logger}
