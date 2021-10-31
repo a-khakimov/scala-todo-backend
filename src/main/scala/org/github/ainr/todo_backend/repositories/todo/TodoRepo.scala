@@ -5,8 +5,7 @@ import cats.syntax.all._
 import doobie.implicits._
 import doobie.util.transactor.Transactor
 import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
-import org.github.ainr.todo_backend.infrastructure.logging.interpreters.LoggerWithMetrics
-import org.github.ainr.todo_backend.infrastructure.logging.{Labels, Logger}
+import org.github.ainr.todo_backend.infrastructure.logging.LoggerWithMetrics
 import org.github.ainr.todo_backend.infrastructure.metrics.LogsCounter
 import org.slf4j.LoggerFactory
 
@@ -35,7 +34,7 @@ object TodoRepo {
     bracket: Bracket[F, Throwable]
   ): TodoRepo[F] = new TodoRepoDoobieImpl(
       transactor,
-      new LoggerWithMetrics[F](
+      LoggerWithMetrics[F](
         LoggerFactory.getLogger(TodoRepo.getClass)
       )(logsCounter)
     )
@@ -44,7 +43,7 @@ object TodoRepo {
     F[_]
   ](
      xa: Transactor[F],
-     logger: Logger[F] with Labels[F]
+     logger: LoggerWithMetrics[F]
    )(
      implicit
      bracket: Bracket[F, Throwable]

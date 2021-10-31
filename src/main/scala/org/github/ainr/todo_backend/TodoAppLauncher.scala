@@ -5,9 +5,7 @@ import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import org.github.ainr.todo_backend.config.App
 import org.github.ainr.todo_backend.http.todo.{TodoHandler, TodoHttp4sRoutes, endpoints}
-import org.github.ainr.todo_backend.infrastructure.logging.LazyLogging
-import org.github.ainr.todo_backend.infrastructure.logging.interpreters.Logger
-import org.github.ainr.todo_backend.infrastructure.logging.interpreters.Logger.instance
+import org.github.ainr.todo_backend.infrastructure.logging.{LazyLogging, Logger}
 import org.github.ainr.todo_backend.infrastructure.metrics.LogsCounter
 import org.github.ainr.todo_backend.repositories.todo.TodoRepo
 import org.github.ainr.todo_backend.services.todo.TodoService

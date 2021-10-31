@@ -1,10 +1,9 @@
 package org.github.ainr.todo_backend.services.todo
 
-import cats.effect.Concurrent
+import cats.Monad
 import cats.syntax.all._
 import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
-import org.github.ainr.todo_backend.infrastructure.logging.interpreters.LoggerWithMetrics
-import org.github.ainr.todo_backend.infrastructure.logging.{Labels, Logger}
+import org.github.ainr.todo_backend.infrastructure.logging.LoggerWithMetrics
 import org.github.ainr.todo_backend.infrastructure.metrics.LogsCounter
 import org.github.ainr.todo_backend.repositories.todo.TodoRepo
 import org.github.ainr.todo_backend.services.todo.TodoService.TodoServiceError
@@ -34,24 +33,26 @@ object TodoService {
 
   def apply[
     F[_]
-    : Concurrent
+    : Monad
   ](
     repo: TodoRepo[F]
   )(
     logsCounter: LogsCounter[F]
-  ) = new TodoServiceImpl[F](repo)(
-    new LoggerWithMetrics[F](
+  ): TodoService[F] = {
+    implicit val logger = LoggerWithMetrics[F](
       LoggerFactory.getLogger(TodoService.getClass)
     )(logsCounter)
-  )
+    new TodoServiceImpl[F](repo)
+  }
 
   final class TodoServiceImpl[
     F[_]
-    : Concurrent
+    : Monad
   ](
      repo: TodoRepo[F]
    )(
-     logger: Logger[F] with Labels[F]
+     implicit
+     logger: LoggerWithMetrics[F]
    ) extends TodoService[F] {
 
     override def getAllTodoItems(): F[List[TodoItem]] =
@@ -71,31 +72,24 @@ object TodoService {
       title: Option[String],
       completed: Option[Boolean],
       ordering: Option[Int]
-    ): F[Either[TodoServiceError, TodoItem]] = {
-
-      def newTodoPayload(
-        default: TodoPayload,
-        title: Option[String],
-        completed: Option[Boolean],
-        ordering: Option[Int]
-      ): TodoPayload = TodoPayload(
-        title.getOrElse(default.title),
-        completed.getOrElse(default.completed),
-        ordering
-      )
-
-      for {
-        oldItem <- repo.getTodoItemById(id)
-        newItem <- oldItem.map(
-          item => TodoItem(id, newTodoPayload(item.payload, title, completed, ordering))
-        ).pure[F]
-        result <- newItem match {
-          case Some(item) => repo.updateTodoItem(item) *> Right(item).pure[F]
-          case None => Left(TodoItemNotFound).pure[F]
-        }
-        _ <- logger.info("")
-      } yield result
-    }
+    ): F[Either[TodoServiceError, TodoItem]] = for {
+      currentItem <- repo.getTodoItemById(id)
+      newItem = currentItem.map { item =>
+        TodoItem(
+          id,
+          TodoPayload(
+            title.getOrElse(item.payload.title),
+            completed.getOrElse(item.payload.completed),
+            ordering
+          )
+        )
+      }
+      result <- newItem match {
+        case Some(item) => repo.updateTodoItem(item) *> Right(item).pure[F]
+        case None => Left(TodoItemNotFound).pure[F]
+      }
+      _ <- logger.info(s"Change todo item by id $id")
+    } yield result
 
     override def deleteAllTodoItems(): F[Unit] =
       repo.deleteAllTodoItems() <*
