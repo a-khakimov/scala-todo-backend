@@ -1,0 +1,19 @@
+name: release
+on:
+  release:
+    types: [published, edited]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Release
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER2 }}
+          password: ${{ secrets.SSH_PASSWORD2 }}
+
+          script: |
+            cp /home/todo/builds/TodoBackend-assembly-0.1.0-SNAPSHOT.jar /home/todo/
+            systemctl restart todo-backend.service
