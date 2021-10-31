@@ -4,8 +4,10 @@ import org.github.ainr.todo_backend.domain.{TodoItem, TodoPayload}
 
 package object todo {
 
-  final case class CreateTodoItemRequest(title: String, order: Option[Int] = None) {
-
+  final case class CreateTodoItemRequest(
+    title: String,
+    order: Option[Int] = None
+  ) {
     def asTodoPayload: TodoPayload = TodoPayload(title, completed = false, order)
   }
 

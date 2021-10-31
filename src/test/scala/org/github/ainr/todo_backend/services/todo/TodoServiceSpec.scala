@@ -3,16 +3,17 @@ package org.github.ainr.todo_backend.services.todo
 import cats.Id as IO
 import cats.syntax.all._
 import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
+import org.github.ainr.todo_backend.infrastructure.logging.LoggerWithMetrics
 import org.github.ainr.todo_backend.repositories.todo.TodoRepo
 import org.github.ainr.todo_backend.services.todo.TodoService.{TodoItemNotFound, TodoServiceImpl}
-import org.github.ainr.todo_backend.services.todo.mocks.LoggerMock
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class TodoServiceSpec extends AnyFlatSpec with Matchers with MockFactory with LoggerMock {
+class TodoServiceSpec extends AnyFlatSpec with Matchers with MockFactory {
 
   private trait mocks {
+    implicit val logger = mock[LoggerWithMetrics[IO]]
     val repo = mock[TodoRepo[IO]]
 
     val service = new TodoServiceImpl[IO](repo)
