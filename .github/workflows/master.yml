@@ -19,14 +19,14 @@ jobs:
           distribution: 'adopt'
 
       - name: Run tests
-        run: sbt test
+        run: sbt coverage test
 
       - name: Coverage report
         run: |
-          sbt coverage coverageReport
+          sbt coverageReport
 
       - name: Assembly
-        run: sbt "clean; set test in assembly := {}; coverageOff; assembly"
+        run: sbt "clean; set test in assembly := {}; assembly"
 
       - name: Save artifacts
         uses: actions/upload-artifact@v2

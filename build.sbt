@@ -1,6 +1,5 @@
 
 lazy val root = (project in file("."))
-  .settings(Coverage.Settings)
   .settings(
     inThisBuild(
       List(
