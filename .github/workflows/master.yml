@@ -8,9 +8,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v2
 
@@ -23,13 +21,27 @@ jobs:
       - name: Run tests
         run: sbt test
 
-      - name: Test and make coverage report
+      - name: Coverage report
         run: |
-          sbt clean coverage test
-          sbt coverageReport
+          sbt coverage coverageReport
 
       - name: Assembly
         run: sbt "clean; set test in assembly := {}; assembly"
+
+      - name: Save artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: target/scala-2.13/TodoBackend-assembly-0.1.0-SNAPSHOT.jar
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Get artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: artifacts
 
       - name: Deploy to remote
         uses: garygrossgarten/github-action-scp@release
