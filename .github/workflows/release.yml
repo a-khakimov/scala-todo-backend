@@ -39,7 +39,7 @@ jobs:
       - name: Deploy to remote
         uses: garygrossgarten/github-action-scp@release
         with:
-          local: target/scala-2.13/TodoBackend-assembly-0.1.0-SNAPSHOT.jar
+          local: TodoBackend-assembly-0.1.0-SNAPSHOT.jar
           remote: /home/todo/release/TodoBackend-assembly-0.1.0-SNAPSHOT.jar
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}

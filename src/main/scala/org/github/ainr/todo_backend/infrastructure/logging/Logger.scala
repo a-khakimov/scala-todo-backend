@@ -2,7 +2,7 @@ package org.github.ainr.todo_backend.infrastructure.logging
 
 import cats.Applicative
 import cats.syntax.all._
-import org.slf4j.{LoggerFactory, Logger as slf4jLogger}
+import org.slf4j.{LoggerFactory, Logger => slf4jLogger}
 
 import scala.language.implicitConversions
 

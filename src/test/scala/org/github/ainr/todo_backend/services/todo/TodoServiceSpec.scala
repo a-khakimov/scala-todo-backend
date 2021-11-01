@@ -1,6 +1,6 @@
 package org.github.ainr.todo_backend.services.todo
 
-import cats.Id as IO
+import cats.{Id => IO}
 import cats.syntax.all._
 import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
 import org.github.ainr.todo_backend.infrastructure.logging.LoggerWithMetrics

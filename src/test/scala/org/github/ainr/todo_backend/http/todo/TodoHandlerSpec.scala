@@ -1,6 +1,6 @@
 package org.github.ainr.todo_backend.http.todo
 
-import cats.Id as IO
+import cats.{Id => IO}
 import cats.implicits.catsSyntaxOptionId
 import org.github.ainr.todo_backend.config.Http
 import org.github.ainr.todo_backend.domain.{Id, TodoItem, TodoPayload}
