@@ -19,7 +19,7 @@ jobs:
         run: sbt test
 
       - name: Assembly
-        run: sbt "clean; coverageOff; set test in assembly := {}; assembly"
+        run: sbt "clean; set test in assembly := {}; coverageOff; assembly"
 
       - name: Save artifacts
         uses: actions/upload-artifact@v2
