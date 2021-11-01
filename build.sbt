@@ -21,3 +21,11 @@ lazy val root = (project in file("."))
   )
 
 sonarProperties := Sonar.properties
+
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", "maven", "org.webjars", "swagger-ui", "pom.properties") =>
+    MergeStrategy.singleOrError
+  case x =>
+    val oldStrategy = (assemblyMergeStrategy in assembly).value
+    oldStrategy(x)
+}
