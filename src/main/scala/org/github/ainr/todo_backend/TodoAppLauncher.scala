@@ -13,10 +13,11 @@ import org.http4s.implicits.http4sKleisliResponseSyntaxOptionT
 import org.http4s.metrics.MetricsOps
 import org.http4s.metrics.prometheus.{Prometheus, PrometheusExportService}
 import org.http4s.server.Router
-import org.http4s.server.middleware.{CORS, Metrics}
+import org.http4s.server.middleware.{CORS, CORSConfig, Metrics}
 import sttp.tapir.swagger.http4s.SwaggerHttp4s
 
 import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.DurationInt
 
 
 object TodoAppLauncher extends IOApp with LazyLogging {
@@ -43,7 +44,10 @@ object TodoAppLauncher extends IOApp with LazyLogging {
             "/metrics" -> metricsService.routes
           )
 
-          http.server(config.http)(CORS(router).orNotFound)(ec)
+          val originConfig = CORSConfig(anyOrigin = true, allowCredentials = true, maxAge = 1.hour.toSeconds)
+          val routerWithCORS = CORS(router, originConfig)
+
+          http.server(config.http)(routerWithCORS.orNotFound)(ec)
       }
     } yield ExitCode.Success
   }
