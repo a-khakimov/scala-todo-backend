@@ -22,7 +22,7 @@ package object http {
     ec: ExecutionContext
   ): F[Unit] = {
     BlazeServerBuilder[F](ec)
-      .bindHttp(conf.port)
+      .bindHttp(conf.port, "0.0.0.0")
       .withHttpApp(service)
       .serve
       .compile
