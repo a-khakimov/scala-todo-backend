@@ -15,7 +15,7 @@ class TodoHandlerSpec extends AnyFlatSpec with Matchers with MockFactory {
 
   private trait mocks {
     val todoService = mock[TodoService[IO]]
-    val handler = TodoHandler[IO](todoService, Http.Config(80, "host", "version"))
+    val handler = TodoHandler[IO](todoService, Http.Config(80, "host", "version", "http://test.api.com"))
   }
 
   "TodoHandler.getAllTodoItems" should "return TodoResponse with all todo items" in new mocks {
@@ -35,7 +35,7 @@ class TodoHandlerSpec extends AnyFlatSpec with Matchers with MockFactory {
     result shouldBe Right(
       TodoResponse(
         id = 42,
-        url = "http://host:80/api/42",
+        url = "http://test.api.com/42",
         title = "Title",
         completed = false,
         order = None
@@ -60,7 +60,7 @@ class TodoHandlerSpec extends AnyFlatSpec with Matchers with MockFactory {
     result shouldBe Right(
       TodoResponse(
         id = 42,
-        url = "http://host:80/api/42",
+        url = "http://test.api.com/42",
         title = "Title",
         completed = false,
         order = None
@@ -95,7 +95,7 @@ class TodoHandlerSpec extends AnyFlatSpec with Matchers with MockFactory {
       )
     )
 
-    result shouldBe Right(TodoResponse(42, "http://host:80/api/42", "Title", false, Some(73)))
+    result shouldBe Right(TodoResponse(42, "http://test.api.com/42", "Title", false, Some(73)))
   }
 
   "TodoHandler.changeTodoItemById" should "return TodoResponse" in new mocks {
@@ -115,7 +115,7 @@ class TodoHandlerSpec extends AnyFlatSpec with Matchers with MockFactory {
 
     val result = handler.changeTodoItemById((Id(42), ChangeTodoItemRequest(None, None, None)))
 
-    result shouldBe Right(TodoResponse(42, "http://host:80/api/42", "Current title", false, Some(73)))
+    result shouldBe Right(TodoResponse(42, "http://test.api.com/42", "Current title", false, Some(73)))
   }
 
   "TodoHandler.changeTodoItemById" should "return NotFound" in new mocks {

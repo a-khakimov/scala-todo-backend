@@ -87,6 +87,6 @@ object endpoints {
       "Todo Backend Api (Scala - tapir/http4s/doobie/cats-effect)",
       conf.version
     ).servers(
-      List(Server(s"http://${conf.host}:${conf.port}/api"))
+      List(Server(conf.serverUri))
     ).toYaml
 }

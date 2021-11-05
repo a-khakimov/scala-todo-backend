@@ -41,7 +41,7 @@ object TodoHandler {
     cfg: Http.Config
   ) extends TodoHandler[F] {
 
-    private val url = s"http://${cfg.host}:${cfg.port}/api"
+    private val url = cfg.serverUri
 
     def getAllTodoItems(): F[Either[ErrorInfo, List[TodoResponse]]] = for {
       items <- todoService.getAllTodoItems()

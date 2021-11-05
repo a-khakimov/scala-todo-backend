@@ -13,11 +13,10 @@ import org.http4s.implicits.http4sKleisliResponseSyntaxOptionT
 import org.http4s.metrics.MetricsOps
 import org.http4s.metrics.prometheus.{Prometheus, PrometheusExportService}
 import org.http4s.server.Router
-import org.http4s.server.middleware.{CORS, CORSConfig, Metrics}
+import org.http4s.server.middleware.Metrics
 import sttp.tapir.swagger.http4s.SwaggerHttp4s
 
 import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.DurationInt
 
 
 object TodoAppLauncher extends IOApp with LazyLogging {
@@ -42,12 +41,9 @@ object TodoAppLauncher extends IOApp with LazyLogging {
             "/api" -> Metrics[IO](metrics)(TodoHttp4sRoutes(todoHandler)),
             "/" -> new SwaggerHttp4s(endpoints.openApiYaml(config.http), "swagger").routes,
             "/metrics" -> metricsService.routes
-          )
+          ).orNotFound
 
-          val originConfig = CORSConfig(anyOrigin = true, allowCredentials = true, maxAge = 1.hour.toSeconds)
-          val routerWithCORS = CORS(router, originConfig)
-
-          http.server(config.http)(routerWithCORS.orNotFound)(ec)
+          http.server(config.http)(router)(ec)
       }
     } yield ExitCode.Success
   }
@@ -61,10 +57,10 @@ object TodoAppLauncher extends IOApp with LazyLogging {
   ): Resource[F, (ExecutionContext, HikariTransactor[F], PrometheusExportService[F],  MetricsOps[F])] = {
     for {
       blocker <- Blocker[F]
-      metricsService <- PrometheusExportService.build[F]
-      metrics <- Prometheus.metricsOps[F](metricsService.collectorRegistry, "server")
       ec <- ExecutionContexts.cachedThreadPool[F]
       transactor <- db.transactor[F](config.database)(ec, blocker)
+      metricsService <- PrometheusExportService.build[F]
+      metrics <- Prometheus.metricsOps[F](metricsService.collectorRegistry, "server")
     } yield (ec, transactor, metricsService, metrics)
   }
 }

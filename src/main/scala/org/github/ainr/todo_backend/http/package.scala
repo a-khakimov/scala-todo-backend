@@ -5,6 +5,7 @@ import cats.effect.{ConcurrentEffect, Timer}
 import org.github.ainr.todo_backend.config.Http
 import org.http4s.{Request, Response}
 import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.server.middleware.CORS
 
 import scala.concurrent.ExecutionContext
 
@@ -23,7 +24,7 @@ package object http {
   ): F[Unit] = {
     BlazeServerBuilder[F](ec)
       .bindHttp(conf.port, "0.0.0.0")
-      .withHttpApp(service)
+      .withHttpApp(CORS(service))
       .serve
       .compile
       .drain
